@@ -2,10 +2,17 @@
 export const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 export async function getProducts() {
-  const data = await fetch(`${BACKEND_URL}/api/products`, {
-      cache: "no-store",
+  const response = await fetch(`${BACKEND_URL}/api/products`, {
+    cache: "no-store",
   });
-  return await data.json();
+
+  if (!response.ok) {
+    console.error('Failed to fetch products:', response.statusText);
+    return []; // Retorna un array vacío en caso de error
+  }
+
+  const data = await response.json();
+  return Array.isArray(data) ? data : []; // Asegúrate de que sea un array
 }
 
 export async function getProduct(id: string) {

@@ -1,29 +1,59 @@
-import Link from "next/link";
-import { buttonVariants } from "@/components/ui/button";
-import { getProducts } from "./products/products.api";
-import { ProductCard } from "@/components/product-card";
+// src/app/page.tsx
+"use client";
 
-export const dynamic = "force-dynamic";
+import React, { useState } from 'react';
 
-async function HomePage() {
-  const products = await getProducts();
+// Importación de componentes desde `src/components`
+import Header from '../components/MainPage/Header';
+import HeroSection from '../components/MainPage/HeroSection';
+import FeatureList from '../components/MainPage/FeatureList';
+import TestimonialsSection from '../components/MainPage/TestimonialsSection';
+import StatsSection from '../components/Dashboard/StatsSection';
+import PricingSection from '../components/MainPage/PricingSection';
+import FAQSection from '../components/MainPage/FAQSection';
+import DemoSection from '../components/MainPage/DemoSection';
+import Footer from '../components/MainPage/Footer';
+import Modal from '../components/Dashboard/Modal';
+import AnimatedComponent from '../components/Efectos/AnimatedComponent'; // Importa el nuevo componente
+
+const HomePage: React.FC = () => {
+  const [isModalOpen, setModalOpen] = useState(false);
+
+  const handleOpenModal = () => setModalOpen(true);
+  const handleCloseModal = () => setModalOpen(false);
 
   return (
-    <>
-      <div className="flex justify-between">
-        <h1 className="text-4xl font-bold">NextNestApp</h1>
+    <div>
+      {/* Contenido principal */}
+      <Header onOpenModal={handleOpenModal} />
+      
+      <AnimatedComponent>
+        <HeroSection />
+      </AnimatedComponent>
+      <AnimatedComponent>
+        <FeatureList />
+      </AnimatedComponent>
+      <AnimatedComponent>
+        <TestimonialsSection />
+      </AnimatedComponent>
+      <AnimatedComponent>
+        <StatsSection />
+      </AnimatedComponent>
+      <AnimatedComponent>
+        <PricingSection />
+      </AnimatedComponent>
+      <AnimatedComponent>
+        <FAQSection />
+      </AnimatedComponent>
+      <AnimatedComponent>
+        <DemoSection />
+      </AnimatedComponent>
+      <Footer />
 
-        <Link href="/products/new" className={buttonVariants()}>
-          Create Product
-        </Link>
-      </div>
-
-      <div className="grid sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
-        {products.map((product: any) => (
-          <ProductCard product={product} key={product.id} />
-        ))}
-      </div>
-    </>
+      {/* Modal */}
+      {isModalOpen && <Modal onClose={handleCloseModal} />}
+    </div>
   );
-}
+};
+
 export default HomePage;

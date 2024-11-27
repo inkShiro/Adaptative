@@ -13,9 +13,10 @@ const Navbar: React.FC<NavbarProps> = ({ role, onSettingsClick }) => {
   const router = useRouter();
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
     localStorage.removeItem('userID');
+    localStorage.removeItem('accessToken');
     localStorage.removeItem('userRole');
+
     router.push('/');
   };
 

@@ -1,9 +1,9 @@
-// src/app/dashboard/modules/page.tsx
 "use client";
 import React, { useEffect, useState } from 'react';
 import Navbar from '../../../components/Dashboard/Navbar';
 import SettingsDrawer from '../../../components/Dashboard/SettingsDrawer';
 import AnimatedComponent from '../../../components/Efectos/AnimatedComponent';
+import { useRouter } from 'next/navigation'; // Usamos el useRouter de next/navigation
 
 const ModulesPage: React.FC = () => {
   const [role, setRole] = useState<string | null>(null);
@@ -11,34 +11,54 @@ const ModulesPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [modules, setModules] = useState<any[]>([]); // Para almacenar los módulos
   const [error, setError] = useState<string | null>(null);
+  const [isMounted, setIsMounted] = useState(false); // Para asegurarse de que el componente está montado
 
-  const toggleSettingsDrawer = () => setIsSettingsOpen(!isSettingsOpen);
+  const router = useRouter(); // Usamos el hook useRouter de next/navigation
+  
+  useEffect(() => {
+    setIsMounted(true); // Establece isMounted a true una vez que el componente está montado en el cliente
+  }, []);
 
   useEffect(() => {
-    const userRole = localStorage.getItem('userRole');
-    setRole(userRole);
+    if (isMounted) {
+      const userRole = localStorage.getItem('userRole');
+      setRole(userRole);
 
-    // Simulación de datos de módulos de ejemplo
-    const simulatedModules = [
-      { id: 1, name: 'Matemáticas', description: 'Aprende los fundamentos de las matemáticas.' },
-      { id: 2, name: 'Ciencias', description: 'Explora el mundo de las ciencias naturales.' },
-      { id: 3, name: 'Historia', description: 'Conoce la historia de diversas civilizaciones.' },
-      { id: 4, name: 'Arte', description: 'Descubre técnicas y estilos artísticos.' },
-    ];
+      // Hacer fetch a la API para obtener los módulos (áreas)
+      const fetchModules = async () => {
+        try {
+          const response = await fetch('http://localhost:4000/api/areas');
+          if (!response.ok) {
+            throw new Error('Error al obtener los módulos');
+          }
+          const data = await response.json();
+          setModules(data);
+          setLoading(false);
+        } catch (error) {
+          setError('No se pudieron cargar los módulos');
+          setLoading(false);
+        }
+      };
 
-    setModules(simulatedModules);
-    setLoading(false);
-  }, []);
+      fetchModules();
+    }
+  }, [isMounted]);
 
   const dashboardStyles =
     role === 'student' ? 'bg-blue-100' :
     role === 'teacher' ? 'bg-green-100' : 
     'bg-gray-100';
 
+  const handleStart = (id: number) => {
+    router.push(`/dashboard/modulos/${id}`);
+  };
+
+  if (!isMounted) return null; // Si no está montado, no renderiza nada
+
   return (
     <div className={`p-8 ${dashboardStyles}`}>
-      <Navbar role={role} onSettingsClick={toggleSettingsDrawer} />
-      <SettingsDrawer isOpen={isSettingsOpen} onClose={toggleSettingsDrawer} />
+      <Navbar role={role} onSettingsClick={() => setIsSettingsOpen(!isSettingsOpen)} />
+      <SettingsDrawer isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
 
       <h1 className="text-4xl font-bold mb-4 mt-8">Módulos</h1>
       
@@ -51,13 +71,13 @@ const ModulesPage: React.FC = () => {
           {modules.map(module => (
             <AnimatedComponent key={module.id}>
               <div className="bg-white shadow-md rounded-lg p-6 transition-transform hover:scale-105">
-                <h2 className="text-2xl font-semibold mb-2">{module.name}</h2>
-                <p className="text-gray-600 mb-4">{module.description}</p>
+                <h2 className="text-2xl font-semibold mb-2">{module.area}</h2>
+                <p className="text-gray-600 mb-4">{module.descripcion}</p>
                 <div className="flex justify-between">
-                  <button className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition">
-                    Ver Más
-                  </button>
-                  <button className="mt-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition">
+                  <button
+                    onClick={() => handleStart(module.id)} // Redirige al hacer clic en 'Comenzar'
+                    className="mt-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition"
+                  >
                     Comenzar
                   </button>
                 </div>

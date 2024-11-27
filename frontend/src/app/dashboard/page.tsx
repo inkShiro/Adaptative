@@ -1,4 +1,3 @@
-// src/app/dashboard/page.tsx
 "use client";
 import React, { useEffect, useState } from 'react';
 import DashboardComponent from '../../components/Dashboard/DashboardBase';
@@ -12,12 +11,27 @@ import PerformanceChart from '../../components/Dashboard/PerformanceChart';
 const Dashboard: React.FC = () => {
   const [role, setRole] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [localStorageItems, setLocalStorageItems] = useState<Record<string, string>>({});
 
   const toggleSettingsDrawer = () => setIsSettingsOpen(!isSettingsOpen);
 
   useEffect(() => {
+    // Obtener y mostrar el rol del usuario
     const userRole = localStorage.getItem('userRole');
     setRole(userRole);
+
+    // Obtener todos los elementos del localStorage
+    const items: Record<string, string> = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key) {
+        items[key] = localStorage.getItem(key) || '';
+      }
+    }
+    setLocalStorageItems(items);
+
+    // Mostrar en la consola
+    console.log('Contenido de localStorage:', items);
   }, []);
 
   const dashboardStyles = role === 'student' ? 'bg-blue-100' : role === 'teacher' ? 'bg-green-100' : 'bg-gray-100';

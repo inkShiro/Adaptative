@@ -1,66 +1,136 @@
-// src/user/user.service.ts
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { User } from '@prisma/client';
-import { LoginDto } from './dto/login.dto';
-import * as bcrypt from 'bcrypt';
-import * as jwt from 'jsonwebtoken';
+import { User, Prisma } from '@prisma/client';
+import { hash } from 'bcrypt';
 
 @Injectable()
 export class UserService {
   constructor(private prisma: PrismaService) {}
 
-  async createUser(data: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User> {
-    const hashedPassword = await bcrypt.hash(data.password, 10);
-    return this.prisma.user.create({ data: { ...data, password: hashedPassword } });
-  }
+  // Crear un nuevo usuario con credenciales cifradas
+  async createUser(data: Prisma.UserCreateInput & { password: string; email: string }): Promise<User> {
+    const hashedPassword = await hash(data.password, 10); // Cifrar la contraseña
 
-  async getUsers(): Promise<User[]> {
-    return this.prisma.user.findMany();
-  }
-
-  async getUserById(id: number): Promise<User | null> {
-    return this.prisma.user.findUnique({ where: { id } });
-  }
-
-  async updateUser(id: number, data: Partial<User>): Promise<User> {
-    const user = await this.prisma.user.findUnique({ where: { id } });
-    if (!user) {
-      throw new UnauthorizedException('User not found');
-    }
-    return this.prisma.user.update({ where: { id }, data });
-  }
-
-  async deleteUser(id: number): Promise<User> {
-    const user = await this.prisma.user.findUnique({ where: { id } });
-    if (!user) {
-      throw new UnauthorizedException('User not found');
-    }
-    return this.prisma.user.delete({ where: { id } });
-  }
-
-  async login(loginDto: LoginDto): Promise<{ token: string; role: string; id: number }> {
-    const user = await this.prisma.user.findUnique({
-      where: { email: loginDto.email },
+    return this.prisma.user.create({
+      data: {
+        ...data,
+        credenciales: {
+          create: {
+            email: data.email,
+            password: hashedPassword,
+          },
+        },
+      },
+      include: { credenciales: true }, // Incluir las credenciales en el resultado
     });
-
-    if (!user) {
-      console.log('User not found'); // Mensaje de depuración
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    const passwordMatch = await bcrypt.compare(loginDto.password, user.password);
-    if (!passwordMatch) {
-      console.log('Password does not match'); // Mensaje de depuración
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: '1h' }
-    );
-
-    return { token, role: user.role, id: user.id };
   }
+
+  // Obtener todos los usuarios
+  async getAllUsers(): Promise<User[]> {
+    return this.prisma.user.findMany({
+      include: { credenciales: true }, // Incluir credenciales
+    });
+  }
+
+  // Obtener un usuario por ID
+  async getUserById(id: string): Promise<User | null> {
+    const numericId = parseInt(id, 10); // Convertir el ID a un número
+  
+    if (isNaN(numericId)) {
+      throw new Error('El ID proporcionado no es un número válido');
+    }
+  
+    return this.prisma.user.findUnique({
+      where: { id: numericId },
+      include: { credenciales: true }, // Incluir credenciales
+    });
+  }
+
+  // Actualizar un usuario con credenciales cifradas si es necesario
+  async updateUser(
+    id: number,
+    data: Prisma.UserUpdateInput & { password?: string; email?: string; dateOfBirth?: string },
+  ): Promise<User> {
+    const updateData: Prisma.UserUpdateInput = {};
+  
+    // Si se incluye una nueva contraseña, cifrarla
+    if (data.password) {
+      updateData.credenciales = {
+        update: {
+          password: await hash(data.password, 10), // Cifrar la nueva contraseña
+        },
+      };
+    }
+  
+    // Si se incluye un nuevo email, actualizarlo
+    if (data.email) {
+      updateData.credenciales = {
+        update: {
+          ...updateData.credenciales,
+          email: data.email,
+        },
+      };
+    }
+  
+    // Actualizar otros campos
+    if (data.fullName) {
+      updateData.fullName = data.fullName;
+    }
+  
+    if (data.role) {
+      updateData.role = data.role;
+    }
+  
+    // Verificar y actualizar la fecha de nacimiento solo si es válida
+    if (data.dateOfBirth) {
+      // Convertir la fecha en formato ISO-8601 a un objeto Date
+      const dateOfBirth = new Date(data.dateOfBirth);
+      if (!isNaN(dateOfBirth.getTime())) {
+        updateData.dateOfBirth = {
+          set: dateOfBirth, // Usar el operador `set` para asignar la fecha correctamente
+        };
+      } else {
+        throw new Error('Fecha de nacimiento no válida');
+      }
+    }
+  
+    // Actualizar otros campos opcionales
+    if (data.phoneNumber) {
+      updateData.phoneNumber = data.phoneNumber;
+    }
+  
+    if (data.address) {
+      updateData.address = data.address;
+    }
+  
+    if (data.city) {
+      updateData.city = data.city;
+    }
+  
+    if (data.school) {
+      updateData.school = data.school;
+    }
+  
+    return this.prisma.user.update({
+      where: { id },
+      data: updateData,
+      include: { credenciales: true }, // Incluir credenciales
+    });
+  }
+  
+  
+
+  // Eliminar un usuario (y sus credenciales automáticamente)
+  async deleteUser(id: string): Promise<User> {
+    const numericId = parseInt(id, 10); // Convertir el ID de tipo string a número
+  
+    if (isNaN(numericId)) {
+      throw new Error('El ID proporcionado no es un número válido');
+    }
+  
+    return this.prisma.user.delete({
+      where: { id: numericId }, // Usar el ID numérico para la operación de eliminación
+    });
+  }
+  
 }

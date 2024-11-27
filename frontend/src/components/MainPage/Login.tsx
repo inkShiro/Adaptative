@@ -12,47 +12,39 @@ const Login: React.FC = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     if (!email || !password) {
       setNotification({ message: 'Por favor, completa todos los campos.', type: 'error' });
       return;
     }
-
+  
     try {
-      const response = await fetch(`http://localhost:4000/api/users/login`, {
+      const response = await fetch(`http://localhost:4000/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
-
+  
       if (response.ok) {
         const data = await response.json();
-        const { role } = data;
-        const { id } = data;
-
-        // Guarda el rol y el id en localStorage
-        localStorage.setItem('userID', id);
+        const { access_token, role, id } = data;
+  
+        // Guardar token y datos de usuario
+        localStorage.setItem('accessToken', access_token);
         localStorage.setItem('userRole', role);
-        console.log(role);
-        console.log(id);
-        
-
+        localStorage.setItem('userID', id);
+  
         setNotification({ message: 'Inicio de sesión exitoso.', type: 'success' });
-        setEmail('');
-        setPassword('');
-        setTimeout(() => {
-          router.push('/dashboard');
-        }, 1000);
+        setTimeout(() => router.push('/dashboard'), 1000);
       } else {
         const errorData = await response.json();
         setNotification({ message: errorData.message || 'Credenciales incorrectas.', type: 'error' });
-        setPassword('');
       }
     } catch (error) {
       setNotification({ message: 'Error de red. Inténtalo de nuevo.', type: 'error' });
-      setPassword('');
     }
   };
+  
 
   const handleNotificationClose = () => {
     setNotification(null);

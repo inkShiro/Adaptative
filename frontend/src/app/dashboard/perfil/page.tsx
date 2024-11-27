@@ -6,15 +6,18 @@ import React, { useEffect, useState } from 'react';
 import { FiEdit } from 'react-icons/fi';
 
 interface UserProfile {
-  id: string;
+  id: number; // Cambié el tipo de string a number porque el id en tu objeto es un número
   fullName: string;
   email: string;
   profileImage?: string;
-  dateOfBirth?: string;
-  phoneNumber?: string;
-  address?: string;
-  city?: string;
-  school?: string;
+  dateOfBirth?: string | null; // Puede ser null según el objeto mostrado
+  phoneNumber?: string | null;
+  address?: string | null;
+  city?: string | null;
+  school?: string | null;
+  credenciales: {
+    email: string;
+  };
 }
 
 const ProfilePage: React.FC = () => {
@@ -78,7 +81,7 @@ const ProfilePage: React.FC = () => {
           : null;
   
         const response = await fetch(`http://localhost:4000/api/users/${userId}`, {
-          method: 'PUT',
+          method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...updatedProfile,
@@ -136,7 +139,7 @@ const ProfilePage: React.FC = () => {
               <input
                 type="email"
                 name="email"
-                value={updatedProfile?.email || ''}
+                value={updatedProfile?.credenciales.email || ''}
                 onChange={handleInputChange}
                 className="border p-2 w-full bg-gray-200 text-gray-500" // Agrega clases para el fondo y el color del texto
                 placeholder="Correo Electrónico"
@@ -219,7 +222,7 @@ const ProfilePage: React.FC = () => {
                 {/* Información del usuario */}
                 <div className="text-left space-y-2">
                   <p><strong>Nombre completo:</strong> {userProfile?.fullName || "Sin datos"}</p>
-                  <p><strong>Email:</strong> {userProfile?.email || "Sin datos"}</p>
+                  <p><strong>Email:</strong> {userProfile?.credenciales.email || "Sin datos"}</p>
                   <p><strong>Fecha de nacimiento:</strong> {userProfile?.dateOfBirth ? userProfile.dateOfBirth.split('T')[0] : "Sin datos"}</p>
                   <p><strong>Teléfono:</strong> {userProfile?.phoneNumber || "Sin datos"}</p>
                   <p><strong>Dirección:</strong> {userProfile?.address || "Sin datos"}</p>

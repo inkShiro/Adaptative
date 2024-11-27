@@ -1,20 +1,106 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-generator client {
-  provider = "prisma-client-js"
-}
-
+// Definición de la fuente de datos para SQLite
 datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
+// Generación del cliente de Prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+model TipoDeAprendizaje {
+  id                 Int        @id @default(autoincrement())
+  tipoDeAprendizaje  String
+  preguntas          Pregunta[] // Relación con preguntas
+}
+
+model TipoDePregunta {
+  id                Int        @id @default(autoincrement())
+  tipoDePregunta    String
+  preguntas         Pregunta[] // Relación con preguntas
+}
+
+model Tema {
+  id          Int      @id @default(autoincrement())
+  tema        String
+  descripcion String?  // Descripción opcional del tema
+  areaId      Int      // Relación con el área
+  area        Area     @relation(fields: [areaId], references: [id]) // Relación con el área
+  preguntas   Pregunta[] // Relación con preguntas
+  conceptos   Concepto[] // Relación con los conceptos
+  complejidad Int?     // Clasificación de complejidad del tema (1 = Bajo, 2 = Medio, 3 = Alto)
+}
+
+model Concepto {
+  id          Int      @id @default(autoincrement())
+  concepto    String   // Nombre del concepto
+  descripcion String?  // Descripción del concepto
+  temaId      Int      // Relación con el tema
+  tema        Tema     @relation(fields: [temaId], references: [id]) // Relación con el tema
+  complejidad Int?     // Clasificación de complejidad del tema (1 = Bajo, 2 = Medio, 3 = Alto)
+}
+
+model Area {
+  id          Int        @id @default(autoincrement())
+  area        String
+  descripcion String?    // Descripción opcional del área
+  preguntas   Pregunta[] // Relación con preguntas
+  temas       Tema[]     // Relación con los temas
+}
+
+model Dificultad {
+  id         Int        @id @default(autoincrement())
+  nivel      String     // Bajo, Medio, Alto
+  preguntas  Pregunta[] // Relación con preguntas
+}
+
+model Pregunta {
+  id                     Int        @id @default(autoincrement())
+  pregunta               String
+  opciones               String?    // Opciones de la pregunta (si aplica)
+  respuesta              String?    // Respuesta correcta
+  explicacion            String?    // Explicación de la respuesta
+
+  tipoDeAprendizajeId    Int
+  tipoDePreguntaId       Int
+  temaId                 Int
+  areaId                 Int
+  dificultadId           Int // Relación con dificultad de la pregunta
+
+  tipoDeAprendizaje      TipoDeAprendizaje @relation(fields: [tipoDeAprendizajeId], references: [id])
+  tipoDePregunta         TipoDePregunta @relation(fields: [tipoDePreguntaId], references: [id])
+  tema                   Tema @relation(fields: [temaId], references: [id])
+  area                   Area @relation(fields: [areaId], references: [id])
+  dificultad            Dificultad @relation(fields: [dificultadId], references: [id]) // Relación con la dificultad
+
+  estadisticas           EstadisticaDeRespuesta[] // Relación con estadísticas
+}
+
+model EstadisticaDeRespuesta {
+  id                Int       @id @default(autoincrement())
+  tiempoDeRespuesta Float     // Tiempo en segundos que el usuario tardó en responder
+  correcta          Boolean   // Indica si la respuesta fue correcta (true) o incorrecta (false)
+  puntuacion        Int       // Puntuación obtenida por la respuesta
+  fecha             DateTime  @default(now()) // Fecha y hora en que se respondió
+
+  // Relaciones con el usuario y la pregunta
+  userId            Int
+  preguntaId        Int
+
+  // Relación con el modelo de usuario
+  user              User      @relation(fields: [userId], references: [id])
+
+  // Relación con el modelo de preguntas
+  pregunta         Pregunta  @relation(fields: [preguntaId], references: [id])
+}
+
 model User {
   id             Int      @id @default(autoincrement())
   fullName       String
-  email          String   @unique
-  password       String
   role           String   // Campo de tipo String en lugar de enum
   dateOfBirth    DateTime?
   phoneNumber    String?
@@ -23,5 +109,18 @@ model User {
   school         String?  // Colegio del usuario (opcional)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+  estadisticas   EstadisticaDeRespuesta[] // Relación con las estadísticas de respuestas
+
+  // Relación con las credenciales del usuario
+  credenciales   Credenciales?       @relation("UserCredenciales")
 }
 
+model Credenciales {
+  id                Int       @id @default(autoincrement())
+  email             String    @unique
+  password          String    // Contraseña cifrada
+
+  // Relación con el modelo de usuario
+  userId            Int      @unique
+  user              User     @relation("UserCredenciales", fields: [userId], references: [id])
+}

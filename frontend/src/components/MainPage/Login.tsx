@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import Notification from '../Efectos/Notification';
 import { useRouter } from 'next/navigation';
 
+const baseURL = process.env.NEXT_PUBLIC_URLBASE;
+
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,7 +21,7 @@ const Login: React.FC = () => {
     }
   
     try {
-      const response = await fetch(`http://localhost:4000/api/auth/login`, {
+      const response = await fetch(`${baseURL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),

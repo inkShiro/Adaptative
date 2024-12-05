@@ -5,6 +5,8 @@ import SettingsDrawer from '../../../components/Dashboard/SettingsDrawer';
 import AnimatedComponent from '../../../components/Efectos/AnimatedComponent';
 import { useRouter } from 'next/navigation'; // Usamos el useRouter de next/navigation
 
+const baseURL = process.env.NEXT_PUBLIC_URLBASE;
+
 const ModulesPage: React.FC = () => {
   const [role, setRole] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -27,7 +29,7 @@ const ModulesPage: React.FC = () => {
       // Hacer fetch a la API para obtener los módulos (áreas)
       const fetchModules = async () => {
         try {
-          const response = await fetch('http://localhost:4000/api/areas');
+          const response = await fetch(`${baseURL}/api/areas`);
           if (!response.ok) {
             throw new Error('Error al obtener los módulos');
           }

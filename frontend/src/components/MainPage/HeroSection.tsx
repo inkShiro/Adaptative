@@ -25,9 +25,6 @@ const HeroSection: React.FC = () => {
         <p className="mt-2 text-lg sm:text-xl drop-shadow-md max-w-lg mx-auto">
           Explora módulos personalizados que se adaptan a tus necesidades.
         </p>
-        <button className="mt-6 bg-white text-green-500 px-8 py-3 rounded-lg hover:bg-gray-200 transition-transform duration-300 transform hover:scale-105 shadow-lg">
-          Comenzar Ahora
-        </button>
       </div>
     </section>
   );

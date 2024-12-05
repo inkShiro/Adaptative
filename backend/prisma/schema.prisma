@@ -33,7 +33,11 @@ model Tema {
   preguntas   Pregunta[] // Relación con preguntas
   conceptos   Concepto[] // Relación con los conceptos
   complejidad Int?     // Clasificación de complejidad del tema (1 = Bajo, 2 = Medio, 3 = Alto)
+
+  // Relación opuesta para ProgresoTema
+  progreso    ProgresoTema[] // Relación con ProgresoTema
 }
+
 
 model Concepto {
   id          Int      @id @default(autoincrement())
@@ -42,7 +46,11 @@ model Concepto {
   temaId      Int      // Relación con el tema
   tema        Tema     @relation(fields: [temaId], references: [id]) // Relación con el tema
   complejidad Int?     // Clasificación de complejidad del tema (1 = Bajo, 2 = Medio, 3 = Alto)
+
+  // Añadir el campo de relación opuesta para ProgresoConcepto
+  progreso    ProgresoConcepto[] // Relación con ProgresoConcepto
 }
+
 
 model Area {
   id          Int        @id @default(autoincrement())
@@ -80,40 +88,37 @@ model Pregunta {
   estadisticas           EstadisticaDeRespuesta[] // Relación con estadísticas
 }
 
-model EstadisticaDeRespuesta {
-  id                Int       @id @default(autoincrement())
-  tiempoDeRespuesta Float     // Tiempo en segundos que el usuario tardó en responder
-  correcta          Boolean   // Indica si la respuesta fue correcta (true) o incorrecta (false)
-  puntuacion        Int       // Puntuación obtenida por la respuesta
-  fecha             DateTime  @default(now()) // Fecha y hora en que se respondió
 
-  // Relaciones con el usuario y la pregunta
-  userId            Int
-  preguntaId        Int
-
-  // Relación con el modelo de usuario
-  user              User      @relation(fields: [userId], references: [id])
-
-  // Relación con el modelo de preguntas
-  pregunta         Pregunta  @relation(fields: [preguntaId], references: [id])
-}
 
 model User {
-  id             Int      @id @default(autoincrement())
-  fullName       String
-  role           String   // Campo de tipo String en lugar de enum
-  dateOfBirth    DateTime?
-  phoneNumber    String?
-  address        String?
-  city           String?  // Ciudad del usuario (opcional)
-  school         String?  // Colegio del usuario (opcional)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  estadisticas   EstadisticaDeRespuesta[] // Relación con las estadísticas de respuestas
+  id                       Int                        @id @default(autoincrement())
+  fullName                 String
+  role                     String
+  dateOfBirth              DateTime?
+  phoneNumber              String?
+  address                  String?
+  city                     String?
+  school                   String?
+  createdAt                DateTime                  @default(now())
+  updatedAt                DateTime                  @updatedAt
+  estadisticas             EstadisticaDeRespuesta[]  // Relación con estadísticas
+  credenciales             Credenciales?             @relation("UserCredenciales")
+  
+  // Relación con ProgresoTema
+  progresoTema             ProgresoTema[]            // Relación con ProgresoTema
+  
+  // Relación con ProgresoConcepto
+  progresoConcepto         ProgresoConcepto[]         // Relación con ProgresoConcepto
+  
+  // Relación con RendimientoDeAprendizaje
+  rendimientoAprendizaje   RendimientoDeAprendizaje? // Un usuario puede tener un rendimiento asociado
 
-  // Relación con las credenciales del usuario
-  credenciales   Credenciales?       @relation("UserCredenciales")
+  // Relación con SesionDePreguntas
+  sesionesDePreguntas      SesionDePreguntas[]       // Relación con sesiones de preguntas
 }
+
+
+
 
 model Credenciales {
   id                Int       @id @default(autoincrement())
@@ -123,4 +128,90 @@ model Credenciales {
   // Relación con el modelo de usuario
   userId            Int      @unique
   user              User     @relation("UserCredenciales", fields: [userId], references: [id])
+}
+
+
+model RendimientoDeAprendizaje {
+  id                      Int     @id @default(autoincrement())
+  userId                  Int     @unique // Este campo debe ser único
+  aprendizajeVisual       Float   // Rendimiento en aprendizaje visual (-20 a 20)
+  aprendizajeAuditivo     Float   // Rendimiento en aprendizaje auditivo (-20 a 20)
+  aprendizajeKinestesico  Float   // Rendimiento en aprendizaje kinestésico (-20 a 20)
+  aprendizajeLecturaEscritura Float // Rendimiento en aprendizaje lectura/escritura (-20 a 20)
+  aprendizajeSecuencial   Float   // Rendimiento en aprendizaje secuencial (-20 a 20)
+  aprendizajeGlobal       Float   // Rendimiento en aprendizaje global (-20 a 20)
+  aprendizajeActivo       Float   // Rendimiento en aprendizaje activo (-20 a 20)
+  aprendizajeReflexivo    Float   // Rendimiento en aprendizaje reflexivo (-20 a 20)
+  aprendizajeSocial       Float   // Rendimiento en aprendizaje social (-20 a 20)
+  aprendizajeIndividual   Float   // Rendimiento en aprendizaje individual (-20 a 20)
+  
+  // Relación bidireccional con User
+  user                    User    @relation(fields: [userId], references: [id])
+}
+
+
+model EstadisticaDeRespuesta {
+  id                Int       @id @default(autoincrement())
+  tiempoDeRespuesta Float     // Tiempo en segundos que el usuario tardó en responder
+  correcta          Boolean   // Indica si la respuesta fue correcta (true) o incorrecta (false)
+  puntuacion        Int       // Puntuación obtenida por la respuesta
+  fecha             DateTime  @default(now()) // Fecha y hora en que se respondió
+
+  // Relaciones con el usuario, la pregunta y la sesión de preguntas
+  userId            Int
+  preguntaId        Int
+  sesionId          Int?
+
+  user              User      @relation(fields: [userId], references: [id])
+  pregunta         Pregunta  @relation(fields: [preguntaId], references: [id])
+  sesion           SesionDePreguntas? @relation(fields: [sesionId], references: [id])
+
+  // Otras métricas que se pueden considerar importantes
+  dificultadPercibida Float?  // Calificación subjetiva de la dificultad por parte del usuario
+  tiempoTotal        Float?  // Tiempo total de la actividad, incluyendo pausas y errores
+}
+
+
+model SesionDePreguntas {
+  id             Int                     @id @default(autoincrement())
+  nombre         String                  // Nombre o identificación de la sesión
+  fechaInicio    DateTime                // Fecha y hora de inicio de la sesión
+  fechaFin       DateTime?               // Fecha y hora de fin de la sesión
+  usuarioId      Int                     // Relación con el usuario que realizó la sesión
+  usuario        User                    @relation(fields: [usuarioId], references: [id])
+
+  // Relación con las estadísticas de respuesta
+  estadisticas   EstadisticaDeRespuesta[] // Relación con estadísticas de respuestas
+
+  // Otras métricas de la sesión si es necesario
+  tiempoTotal    Float?                   // Tiempo total de la sesión
+
+  // Nueva puntuación de la sesión
+  puntuacion     Float?                     // Puntuación obtenida en la sesión
+}
+
+
+model ProgresoConcepto {
+  id          Int     @id @default(autoincrement())
+  progreso    Float   // Progreso del concepto, valor entre 1 y 100
+  conceptoId  Int     // Relación con el concepto
+  usuarioId   Int     // Relación con el usuario
+
+  concepto    Concepto @relation(fields: [conceptoId], references: [id])
+  usuario     User     @relation(fields: [usuarioId], references: [id])
+
+  @@unique([conceptoId, usuarioId]) // Asegura que un usuario solo tenga un registro por concepto
+}
+
+
+model ProgresoTema {
+  id         Int     @id @default(autoincrement())
+  progreso   Float   // Progreso del tema, valor entre 1 y 100
+  temaId     Int     // Relación con el tema
+  usuarioId  Int     // Relación con el usuario
+
+  tema       Tema    @relation(fields: [temaId], references: [id])
+  usuario    User    @relation(fields: [usuarioId], references: [id])
+
+  @@unique([temaId, usuarioId]) // Asegura que un usuario solo tenga un registro por tema
 }

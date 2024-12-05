@@ -5,6 +5,8 @@ import SettingsDrawer from '../../../components/Dashboard/SettingsDrawer';
 import React, { useEffect, useState } from 'react';
 import { FiEdit } from 'react-icons/fi';
 
+const baseURL = process.env.NEXT_PUBLIC_URLBASE;
+
 interface UserProfile {
   id: number; // Cambié el tipo de string a number porque el id en tu objeto es un número
   fullName: string;
@@ -44,7 +46,7 @@ const ProfilePage: React.FC = () => {
           return;
         }
 
-        const response = await fetch(`http://localhost:4000/api/users/${userId}`);
+        const response = await fetch(`${baseURL}/api/users/${userId}`);
         if (response.ok) {
           const data = await response.json();
           setUserProfile(data);
@@ -80,7 +82,7 @@ const ProfilePage: React.FC = () => {
           ? new Date(updatedProfile.dateOfBirth).toISOString() // Convierte a formato ISO
           : null;
   
-        const response = await fetch(`http://localhost:4000/api/users/${userId}`, {
+        const response = await fetch(`${baseURL}/api/users/${userId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

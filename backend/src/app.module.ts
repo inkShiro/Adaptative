@@ -4,7 +4,11 @@ import { PrismaModule } from './prisma/prisma.module';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { AreaModule } from './area/area.module';
+import { QuestionModule } from './question/question.module';
 import { ConfigModule } from '@nestjs/config';
+import { ContentModule } from './content/content.module';
+import { RendimientoDeAprendizajeModule } from './rendimiento/rendimiento-de-aprendizaje.module';
+
 
 @Module({
   imports: [
@@ -13,6 +17,9 @@ import { ConfigModule } from '@nestjs/config';
     ConfigModule.forRoot(),
     AuthModule,
     AreaModule,
+    QuestionModule,
+    ContentModule,
+    RendimientoDeAprendizajeModule,
   ],
 })
 export class AppModule {}

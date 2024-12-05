@@ -1,17 +1,28 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation'; // Usamos useParams en lugar de useRouter
+import { useParams } from 'next/navigation';
 import Navbar from '../../../../components/Dashboard/Navbar';
 import SettingsDrawer from '../../../../components/Dashboard/SettingsDrawer';
+import TopicList from '@/components/Modulos/TopicList';
+
+const baseURL = process.env.NEXT_PUBLIC_URLBASE;
+
+interface Module {
+  id: number;
+  area: string;
+  descripcion: string;
+}
 
 const ModulePage: React.FC = () => {
   const [role, setRole] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [module, setModule] = useState<any>(null); // Para almacenar la información del módulo
+  const [module, setModule] = useState<Module | null>(null);
+  const [topics, setTopics] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const { id } = useParams(); // Ahora usamos useParams para acceder al parámetro 'id' de la URL
+  // Obtener los parámetros de la URL
+  const { areaId, topicId } = useParams();
 
   const toggleSettingsDrawer = () => setIsSettingsOpen(!isSettingsOpen);
 
@@ -19,26 +30,36 @@ const ModulePage: React.FC = () => {
     const userRole = localStorage.getItem('userRole');
     setRole(userRole);
 
-    // Hacer fetch a la API para obtener la información general del módulo
-    const fetchModule = async () => {
-      if (!id) return;
+    const fetchModuleAndTopics = async () => {
+      if (!areaId) return;
 
       try {
-        const response = await fetch(`http://localhost:4000/api/areas/${id}`);
-        if (!response.ok) {
+        // Fetch para obtener la información del módulo
+        const moduleResponse = await fetch(`${baseURL}/api/areas/${areaId}`);
+        if (!moduleResponse.ok) {
           throw new Error('Error al obtener la información del módulo');
         }
-        const data = await response.json();
-        setModule(data);
+        const moduleData: Module = await moduleResponse.json();
+        setModule(moduleData);
+
+        // Fetch para obtener los temas relacionados con el área del módulo
+        const topicsResponse = await fetch(`${baseURL}/api/content/theme/${moduleData.id}`);
+        if (!topicsResponse.ok) {
+          throw new Error('Error al obtener los temas');
+        }
+        const topicsData = await topicsResponse.json();
+        setTopics(topicsData);
+
         setLoading(false);
       } catch (error) {
-        setError('No se pudo cargar la información del módulo');
+        console.error('Error:', error);
+        setError('No se pudo cargar la información del módulo o los temas');
         setLoading(false);
       }
     };
 
-    fetchModule();
-  }, [id]);
+    fetchModuleAndTopics();
+  }, [areaId]);
 
   const dashboardStyles =
     role === 'student' ? 'bg-blue-100' :
@@ -56,12 +77,14 @@ const ModulePage: React.FC = () => {
         <p className="text-gray-500">Cargando módulo...</p>
       ) : error ? (
         <p className="text-red-500">{error}</p>
-      ) : (
+      ) : module ? (  // Verificación de nulidad
         <div>
-          <h2 className="text-2xl font-semibold">{module?.area}</h2>
           <p className="text-gray-600">{module?.descripcion}</p>
-          {/* Resumen del módulo, como objetivos, contenido general, etc. */}
+          {/* Muestra la lista de temas */}
+          <TopicList topics={topics} areaId={module.id} />
         </div>
+      ) : (
+        <p className="text-gray-500">No se pudo encontrar la información del módulo.</p>
       )}
     </div>
   );

@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import Notification from '../Efectos/Notification';
 
+const baseURL = process.env.NEXT_PUBLIC_URLBASE;
+
 const Register: React.FC = () => {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -16,7 +18,7 @@ const Register: React.FC = () => {
   const handleRegister = async () => {
     if (fullName && email && validatePassword() && confirmPassword === password && acceptedTerms && role) {
       try {
-        const response = await fetch(`http://localhost:4000/api/users`, {  // Usar la variable de entorno aquí
+        const response = await fetch(`${baseURL}/api/users`, {  // Usar la variable de entorno aquí
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
